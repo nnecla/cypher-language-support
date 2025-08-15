@@ -2,6 +2,7 @@ const fs = require('fs');
 const languageSupport = require('@neo4j-cypher/language-support');
 const textMateGrammar = languageSupport.textMateGrammar;
 
+// test1
 fs.writeFileSync(
   './syntaxes/cypher.json',
   JSON.stringify(textMateGrammar, undefined, 2),
