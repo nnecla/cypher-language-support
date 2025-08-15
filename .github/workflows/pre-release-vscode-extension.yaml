@@ -33,6 +33,7 @@ jobs:
 
       - name: Bump version (odd minor rule)
         run: |
+          cd packages/vscode-extension
           # obtain current version as "x.y.z"
           CURRENT=$(node -p "require('./package.json').version")
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
