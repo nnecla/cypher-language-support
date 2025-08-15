@@ -3,7 +3,8 @@ name: Pre Release VSCode extension
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 9 * * *'
+    # Every weekday at 9:00 UTC
+    - cron: '0 9 * * 1-5'
   push:
     branches:
       - main
@@ -26,12 +27,32 @@ jobs:
       - name: Setup and build project
         uses: ./.github/actions/setup-and-build
 
+      - name: Restore latest pre-released sha
+        uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
+        id: cache-pre-release-sha
+        with:
+          path: last-published-sha
+          key: vs-code-extension-pre-release-sha-${{ github.run_id }}
+          restore-keys: |
+            vs-code-extension-pre-release-sha-
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          CURRENT_SHA=$GITHUB_SHA
+          if [[ ! -f last-published-sha || "$(cat last-published-sha 2>/dev/null)" != "$CURRENT_SHA" ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set Up Git User
         run: |
           git config --global user.name "Dev Artifact Bot"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version (odd minor rule)
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           cd packages/vscode-extension
           # obtain current version as "x.y.z"
@@ -52,7 +73,13 @@ jobs:
           git commit -m "bump pre-release version to $NEW_VERSION"
           git push
 
+      - name: Update cached SHA
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "$GITHUB_SHA" > last-published-sha
+
       - name: Publish pre-release
+        if: steps.check_changes.outputs.has_changes == 'true'
         env:
           VSX_PAT: ${{ secrets.VSX_PAT }}
         run: |
