@@ -2,7 +2,7 @@
   "name": "neo4j-cypher-language-support",
   "description": "Neo4j's Cypher Language Support",
   "license": "Apache",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "categories": [],
   "private": true,
   "repository": {
