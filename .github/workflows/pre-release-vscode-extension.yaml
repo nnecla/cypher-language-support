@@ -46,8 +46,9 @@ jobs:
           fi
 
           echo "Bumping version from $CURRENT to $NEW_VERSION"
-          npm version "$NEW_VERSION" --no-git-tag-version
-          git commit -m "chore: bump pre-release version to $NEW_VERSION"
+          pnpm version "$NEW_VERSION" --no-git-tag-version
+          git add .
+          git commit -m "bump pre-release version to $NEW_VERSION"
           git push
 
       - name: Publish pre-release
