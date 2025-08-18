@@ -36,6 +36,8 @@ jobs:
         id: check_changes
         run: |
           CURRENT_SHA=$GITHUB_SHA
+          echo "Current SHA: $CURRENT_SHA"
+          echo "Last published SHA: $(cat last-published-sha 2>/dev/null || echo 'none')"
           if [[ ! -f last-published-sha || "$(cat last-published-sha 2>/dev/null)" != "$CURRENT_SHA" ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
@@ -76,7 +78,9 @@ jobs:
 
       - name: Set the last published cached SHA
         if: steps.check_changes.outputs.has_changes == 'true'
-        run: echo "$GITHUB_SHA" > last-published-sha
+        run: |
+          echo "$GITHUB_SHA" > last-published-sha
+          echo "Last published SHA set to: $GITHUB_SHA"
 
       - name: Cache the last published SHA
         if: steps.check_changes.outputs.has_changes == 'true'
