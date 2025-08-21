@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - pre-release-test
     paths:
       - 'packages/vscode-extension/**'
 
@@ -15,12 +16,16 @@ env:
   NODE_OPTIONS: '--max_old_space_size=4096'
 
 jobs:
-  pre-release-vscode-extension:
-    name: 'Pre Release VSCode extension'
-    environment: publish-vscode-extension
+  update-vscode-extension:
+    name: 'Update VSCode extension'
+    environment: aws-artifacts
     runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check_changes.outputs.has_changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Restore latest pre-released sha
         uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
@@ -44,12 +49,6 @@ jobs:
       - name: Setup and build project
         if: steps.check_changes.outputs.has_changes == 'true'
         uses: ./.github/actions/setup-and-build
-
-      - name: Set Up Git User
-        if: steps.check_changes.outputs.has_changes == 'true'
-        run: |
-          git config --global user.name "Pre-release Bot"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version (odd minor rule)
         if: steps.check_changes.outputs.has_changes == 'true'
@@ -87,11 +86,17 @@ jobs:
           path: last-published-sha
           key: vs-code-extension-pre-release-sha-${{ github.run_number }}
 
+  pre-release-vscode-extension:
+    name: 'Pre Release VSCode extension'
+    environment: publish-vscode-extension
+    needs: [update-vscode-extension]
+    if: ${{ needs.update-vscode-extension.outputs.has_changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Publish pre-release
-        if: steps.check_changes.outputs.has_changes == 'true'
         env:
           VSX_PAT: ${{ secrets.VSX_PAT }}
         run: |
           cd packages/vscode-extension
           pnpm package --pre-release
-          pnpm vsce publish --pre-release --no-dependencies --pat $VSX_PAT
+          # pnpm vsce publish --pre-release --no-dependencies --pat $VSX_PAT
