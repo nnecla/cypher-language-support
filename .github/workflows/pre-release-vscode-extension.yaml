@@ -46,6 +46,10 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Setup and build project
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: ./.github/actions/setup-and-build
+
       - name: Set up Git
         run: |
           git config --global user.name "neo4j-not-browser-bot"
@@ -94,9 +98,6 @@ jobs:
     if: ${{ needs.update-vscode-extension.outputs.has_changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Setup and build project
-        uses: ./.github/actions/setup-and-build
-
       - name: Publish pre-release
         env:
           VSX_PAT: ${{ secrets.VSX_PAT }}
